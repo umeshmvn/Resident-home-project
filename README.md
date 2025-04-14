@@ -91,21 +91,52 @@ flutter pub get
 **Run the App server**
 ```bash
 flutter run -d chrome      # Or -d windows / -d android / -d ios
-'''
+```
 ---
-
 ### 🧠 How It Works
 
-User enters a query (e.g., "What is LLM?") in the Flutter UI.
+- User enters a query (e.g., "What is LLM?") in the Flutter UI.
 
-The query is sent to the backend via WebSocket.
+- The query is sent to the backend via WebSocket.
 
-Tavily performs a real-time web search.
+- Tavily performs a real-time web search.
 
-Search results are reranked using cosine similarity via MiniLM embeddings.
+- Search results are reranked using cosine similarity via MiniLM embeddings.
 
-The reranked context is sent to Gemini Pro with a structured prompt.
+- The reranked context is sent to Gemini Pro with a structured prompt.
 
-Gemini generates a response, streamed chunk-by-chunk via WebSocket.
+- Gemini generates a response, streamed chunk-by-chunk via WebSocket.
 
-Flutter displays streamed content live as it arrives.
+- Flutter displays streamed content live as it arrives.
+---
+
+## 🏗️ System Design Architecture
+
+```text
+                  ┌────────────────────┐
+                  │     Flutter UI     │
+                  │  (Web/Desktop/Mob) │
+                  └────────┬───────────┘
+                           │
+                   WebSocket / HTTP
+                           │
+            ┌──────────────▼───────────────┐
+            │        FastAPI Server        │
+            │  (main.py - Backend Logic)   │
+            └──────────────┬───────────────┘
+                           │
+          ┌────────────────┼────────────────┐
+          │                │                │
+          ▼                ▼                ▼
+   Tavily Web API     Gemini Pro       Cosine Similarity
+  (Live search data)   (LLM Response)    (Reranking via MiniLM)
+          │                │                │
+          └────────────────┴────────────────┘
+                           │
+             Streamed Response via WebSocket
+                           │
+                  ┌────────▼────────┐
+                  │   Flutter UI    │
+                  │  Rendered Chat  │
+                  └─────────────────┘
+
